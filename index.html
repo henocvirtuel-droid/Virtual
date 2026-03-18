@@ -3,37 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Virtual</title>
+<title>Virtual Chat</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <style>
-body{font-family:Arial;background:#ece5dd;margin:0;padding:0;}
-header{background:#075e54;color:white;padding:15px;text-align:center;font-size:1.5em;}
+body{font-family:Arial;background:#e5ddd5;margin:0;padding:0;}
+header{background:#075e54;color:white;text-align:center;padding:15px;font-size:1.5em;}
 #chat-list{max-width:600px;margin:0 auto;height:20vh;overflow-y:auto;}
-.chat-item{display:flex;align-items:center;padding:10px;cursor:pointer;border-bottom:1px solid #ccc;}
+.chat-item{display:flex;align-items:center;padding:10px;border-bottom:1px solid #ccc;cursor:pointer;}
 .chat-item:hover{background:#f1f0f0;}
 .avatar{width:40px;height:40px;border-radius:50%;margin-right:10px;}
 .chat-info{flex:1;}
 .chat-name{font-weight:bold;}
+.status-text{font-size:0.8em;color:gray;}
 .last-message{font-size:0.9em;color:gray;}
-.timestamp{font-size:0.8em;color:gray;}
-#chat-container{max-width:600px;margin:0 auto;height:40vh;overflow-y:auto;padding:10px;display:flex;flex-direction:column;}
+#chat-container{max-width:600px;margin:0 auto;height:50vh;overflow-y:auto;padding:10px;display:flex;flex-direction:column;}
 .message{padding:10px;border-radius:20px;margin:5px 0;max-width:70%;line-height:1.4;display:flex;flex-direction:column;}
 .message.user{align-self:flex-end;background:#dcf8c6;border-bottom-right-radius:0;}
 .message.other{align-self:flex-start;background:#ffffff;border-bottom-left-radius:0;}
-.edited{font-size:0.7em;color:gray;}
-.read-status{font-size:0.7em;color:green;align-self:flex-end;}
+.ticks{font-size:0.7em;color:gray;align-self:flex-end;}
 #input-container{display:flex;max-width:600px;margin:0 auto;padding:10px;}
 #input-container input{flex:1;padding:10px;border-radius:20px;border:1px solid #ccc;margin-right:5px;}
 #input-container button{padding:10px 20px;border-radius:20px;border:none;background:#25d366;color:white;cursor:pointer;}
-#posts{max-width:600px;margin:20px auto;}
-.post{background:#fff;padding:10px;border-radius:10px;margin-bottom:10px;}
-.post span{font-size:0.8em;color:gray;}
-.like-btn, .comment-btn{cursor:pointer;color:#25d366;margin-right:10px;}
-.comment-input{width:90%;padding:5px;margin-top:5px;border-radius:10px;border:1px solid #ccc;}
-.status-text{font-size:0.8em;color:gray;}
 </style>
 </head>
 <body>
@@ -50,9 +41,6 @@ header{background:#075e54;color:white;padding:15px;text-align:center;font-size:1
 <button onclick="sendMessage()">Envoyer</button>
 </div>
 
-<!-- Section posts -->
-<div id="posts"></div>
-
 <script>
 // 🔹 CONFIGURATION FIREBASE 🔹
 const firebaseConfig = {
@@ -68,12 +56,11 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // 🔹 VARIABLES 🔹
-let currentUserId = "user123"; // remplacer par Firebase Auth
+let currentUserId = "user123"; // changer pour simuler plusieurs utilisateurs
 let currentChatId = "chat_user123_user456";
 const chatContainer = document.getElementById('chat-container');
 const chatList = document.getElementById('chat-list');
 const userInput = document.getElementById('user-input');
-const postsDiv = document.getElementById('posts');
 
 // 🔹 PRÉSENCE EN LIGNE 🔹
 const userStatusRef = db.ref(`users/${currentUserId}/status`);
@@ -85,20 +72,18 @@ db.ref(`users/${currentUserId}/statusText`).set("Disponible 😎");
 
 // 🔹 CONVERSATIONS EXEMPLE 🔹
 const conversations = [
-  {id:"chat_user123_user456", name:"Henoc", lastMessage:"Salut !", avatar:"https://i.pravatar.cc/40?img=1"},
-  {id:"chat_user123_user789", name:"Virtuel Deux", lastMessage:"Ça va ?", avatar:"https://i.pravatar.cc/40?img=2"}
+  {id:"chat_user123_user456", name:"Henoc", avatar:"https://i.pravatar.cc/40?img=1"},
+  {id:"chat_user123_user789", name:"Virtuel Deux", avatar:"https://i.pravatar.cc/40?img=2"}
 ];
 conversations.forEach(c=>{
-  const div = document.createElement('div');
+  const div=document.createElement('div');
   div.className="chat-item";
   div.onclick=()=>openChat(c.id);
   div.innerHTML=`<img src="${c.avatar}" class="avatar">
   <div class="chat-info">
     <span class="chat-name">${c.name}</span>
     <span class="status-text" id="status-${c.id}"></span>
-    <br><span class="last-message">${c.lastMessage}</span>
-  </div>
-  <span class="timestamp">17:00</span>`;
+  </div>`;
   chatList.appendChild(div);
   displayOnlineStatus(c.id, document.getElementById(`status-${c.id}`));
 });
@@ -106,42 +91,42 @@ conversations.forEach(c=>{
 // 🔹 AFFICHER PRÉSENCE 🔹
 function displayOnlineStatus(userId, element){
   db.ref(`users/${userId}/status`).on("value", snap=>{
-    element.textContent = snap.val() === "online" ? "En ligne" : "Hors ligne";
+    element.textContent = snap.val()==="online"?"En ligne":"Hors ligne";
   });
 }
 
 // 🔹 OUVRIR CONVERSATION 🔹
 function openChat(chatId){
-  currentChatId = chatId;
+  currentChatId=chatId;
   chatContainer.innerHTML="";
-  const chatRef = db.ref(`privateChats/${chatId}/messages`);
+  const chatRef=db.ref(`privateChats/${chatId}/messages`);
   chatRef.on("child_added", snapshot=>{
-    const data = snapshot.val();
-    addMessageToUI(snapshot.key, data.sender, data.text, data.edited, data.readBy);
+    const data=snapshot.val();
+    addMessageToUI(snapshot.key,data.senderId,data.text,data.edited,data.readBy);
   });
 }
 
 // 🔹 AJOUTER MESSAGE UI 🔹
-function addMessageToUI(msgId, sender, text, edited, readBy){
-  const msgDiv = document.createElement('div');
-  msgDiv.className = sender===currentUserId ? "message user" : "message other";
-  const readStatus = sender===currentUserId ? `<span class="read-status">${readBy && readBy.includes(currentUserId)?"✅ lu":""}</span>` : "";
-  msgDiv.innerHTML = `<span>${text}</span>${edited?'<span class="edited">(modifié)</span>':''}${readStatus}`;
+function addMessageToUI(msgId,sender,text,edited,readBy){
+  const msgDiv=document.createElement('div');
+  msgDiv.className=sender===currentUserId?"message user":"message other";
+  const tickText=sender===currentUserId?`${readBy&&readBy.includes(currentUserId)?"✅ lu":"✅"}`:"";
+  msgDiv.innerHTML=`<span>${text}</span>${edited?'<span class="ticks">(modifié)</span>':''}<span class="ticks">${tickText}</span>`;
   chatContainer.appendChild(msgDiv);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  chatContainer.scrollTop=chatContainer.scrollHeight;
   if(sender!==currentUserId) markMessageAsRead(msgId);
 }
 
 // 🔹 ENVOYER MESSAGE 🔹
 function sendMessage(){
-  const text = userInput.value.trim();
+  const text=userInput.value.trim();
   if(!text) return;
-  const msgId = "msg"+Date.now();
-  const now = new Date().toISOString();
+  const msgId="msg"+Date.now();
+  const now=new Date().toISOString();
   db.ref(`privateChats/${currentChatId}/messages/${msgId}`).set({
-    sender: currentUserId,
-    text: text,
-    timestamp: now,
+    senderId:currentUserId,
+    text:text,
+    timestamp:now,
     edited:false,
     readBy:[]
   });
@@ -150,109 +135,15 @@ function sendMessage(){
 
 // 🔹 CONFIRMATION LECTURE 🔹
 function markMessageAsRead(msgId){
-  const msgRef = db.ref(`privateChats/${currentChatId}/messages/${msgId}/readBy`);
-  msgRef.once("value", snap=>{
-    let readers = snap.val() || [];
+  const msgRef=db.ref(`privateChats/${currentChatId}/messages/${msgId}/readBy`);
+  msgRef.once("value",snap=>{
+    let readers=snap.val()||[];
     if(!readers.includes(currentUserId)){
       readers.push(currentUserId);
       msgRef.set(readers);
     }
   });
 }
-
-// 🔹 MODIFIER MESSAGE 🔹
-function editMessage(msgId, newText){
-  db.ref(`privateChats/${currentChatId}/messages/${msgId}`).update({text:newText, edited:true});
-}
-
-// 🔹 POSTS COMPLETS 🔹
-function createPost(content,type,visibleTo){
-  const postId="post"+Date.now();
-  const now=new Date().toISOString();
-  db.ref(`posts/${postId}`).set({
-    author:currentUserId,
-    content:content,
-    type:type,
-    visibleTo:type==="private"?visibleTo:[],
-    timestamp:now,
-    paid:type==="public"?false:true,
-    approved:type==="public"?false:true,
-    likes:[],
-    comments:[]
-  });
-  displayPosts();
-}
-
-function displayPosts(){
-  postsDiv.innerHTML="";
-  db.ref('posts').once('value',snapshot=>{
-    snapshot.forEach(child=>{
-      const p=child.val();
-      if(p.type==="private"&&!p.visibleTo.includes(currentUserId)) return;
-      if(p.type==="public"&&!p.approved) return;
-      const div=document.createElement('div');
-      div.className="post";
-      div.innerHTML=`<strong>${p.author}</strong><p>${p.content}</p>
-        ${p.type==="public"?'<span style="color:green;">Public</span>':'<span style="color:blue;">Privé</span>'}
-        <div>
-          <span class="like-btn" onclick="likePost('${child.key}')">👍 ${p.likes.length}</span>
-          <span class="comment-btn" onclick="showCommentInput('${child.key}')">💬 Commenter (${p.comments.length})</span>
-        </div>
-        <div id="comments-${child.key}"></div>`;
-      postsDiv.appendChild(div);
-      displayComments(child.key,p.comments);
-    });
-  });
-}
-
-// 🔹 LIKE 🔹
-function likePost(postId){
-  const postRef=db.ref(`posts/${postId}/likes`);
-  postRef.once('value',snap=>{
-    let likes=snap.val()||[];
-    if(!likes.includes(currentUserId)){
-      likes.push(currentUserId);
-      postRef.set(likes);
-      displayPosts();
-    }
-  });
-}
-
-// 🔹 COMMENT 🔹
-function showCommentInput(postId){
-  const div=document.getElementById(`comments-${postId}`);
-  div.innerHTML=`<input class="comment-input" id="comment-input-${postId}" placeholder="Écris un commentaire..."><button onclick="addComment('${postId}')">Envoyer</button>`;
-}
-
-function addComment(postId){
-  const input=document.getElementById(`comment-input-${postId}`);
-  const text=input.value.trim();
-  if(!text) return;
-  const postRef=db.ref(`posts/${postId}/comments`);
-  postRef.once('value',snap=>{
-    const comments=snap.val()||[];
-    comments.push({user:currentUserId,text:text});
-    postRef.set(comments);
-    displayPosts();
-  });
-}
-
-function displayComments(postId,comments){
-  const div=document.getElementById(`comments-${postId}`);
-  if(!div) return;
-  div.innerHTML="";
-  comments.forEach(c=>{
-    const cdiv=document.createElement('div');
-    cdiv.textContent=`${c.user}: ${c.text}`;
-    div.appendChild(cdiv);
-  });
-}
-
-// 🔹 ADMIN VALIDE POST PUBLIC 🔹
-function approvePost(postId){
-  db.ref(`posts/${postId}`).update({approved:true, paid:true}).then(()=>displayPosts());
-}
-displayPosts();
 </script>
 </body>
   </html>
