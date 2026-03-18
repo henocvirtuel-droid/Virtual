@@ -3,57 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Virtual</title>
-
+<title>Henoc Virtuel Chat</title>
 <!-- Firebase JS -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <style>
-body { font-family: Arial; background: #ece5dd; margin:0; padding:0;}
-header { background: #075e54; color: white; text-align:center; padding:15px; font-size:1.5em;}
-#container { display:flex; flex-direction: column; max-width: 600px; margin: 0 auto; }
-#chat-list { height:15vh; overflow-y:auto; border-bottom:1px solid #ccc;}
-.chat-item{display:flex;align-items:center;padding:8px;cursor:pointer;border-bottom:1px solid #eee;}
-.chat-item:hover{background:#f1f0f0;}
-.avatar{width:40px;height:40px;border-radius:50%;margin-right:10px;}
-.chat-name{font-weight:bold;}
-.status-text{font-size:0.8em;color:gray;}
-#chat-container { height:35vh; overflow-y:auto; padding:10px; display:flex; flex-direction:column;}
-.message{padding:10px;margin:5px 0;border-radius:20px;max-width:70%;line-height:1.4;display:flex;flex-direction:column;}
-.message.user{align-self:flex-end;background:#dcf8c6;border-bottom-right-radius:0;}
-.message.other{align-self:flex-start;background:#ffffff;border-bottom-left-radius:0;}
-.ticks{font-size:0.7em;color:gray;align-self:flex-end;}
-#input-container{display:flex;margin:5px 0;}
-#input-container input{flex:1;padding:10px;border-radius:20px;border:1px solid #ccc;margin-right:5px;}
-#input-container button{padding:10px 20px;border-radius:20px;border:none;background:#25d366;color:white;cursor:pointer;}
-#posts{margin-top:10px;}
-.post{background:white;padding:10px;border-radius:10px;margin-bottom:10px;}
-.post .actions{margin-top:5px;display:flex;gap:10px;}
+body { font-family: Arial; background: #ece5dd; margin: 0; padding: 0; }
+header { background: #075e54; color: white; padding: 15px; text-align: center; font-size: 1.5em; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+#title { text-align: center; font-size: 1.8em; margin: 10px 0; color: #075e54; font-weight: bold; }
+#chat-container { display: flex; flex-direction: column; height: calc(100vh - 160px); max-width: 600px; margin: 0 auto; padding: 10px; overflow-y: auto; scroll-behavior: smooth; background: #f0f0f0; border-radius: 10px;}
+.message { max-width: 70%; margin: 5px 0; padding: 10px 10px 5px 10px; border-radius: 20px; word-wrap: break-word; position: relative; line-height: 1.4; display: flex; align-items: flex-end; }
+.user { align-self: flex-end; background-color: #dcf8c6; border-bottom-right-radius: 0; }
+.other { align-self: flex-start; background-color: #ffffff; border-bottom-left-radius: 0; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; margin-right: 5px; flex-shrink: 0; }
+.username { font-weight: bold; display: block; margin-bottom: 2px; }
+.timestamp { font-size: 0.7em; color: gray; margin-left: 5px; }
+#input-container { display: flex; max-width: 600px; margin: 0 auto; padding: 10px; background: #fff; box-shadow: 0 -2px 5px rgba(0,0,0,0.1);}
+#input-container input { padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; margin-right: 5px; }
+#input-container button { padding: 10px 20px; border-radius: 20px; border: none; background: #25d366; color: white; cursor: pointer; font-weight: bold; transition: background 0.2s;}
+#input-container button:hover { background: #128c7e; }
+.new-msg-notification { position: fixed; bottom: 80px; right: 20px; background: #fffa65; padding: 10px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: none; cursor: pointer; font-weight: bold;}
+@media (max-width: 640px){
+  #input-container { flex-direction: column; }
+  #input-container input { margin: 5px 0; width: 100%; }
+  #input-container button { width: 100%; }
+}
 </style>
 </head>
 <body>
-
-<header>Virtual</header>
-<div id="container">
-
-<!-- Liste chats -->
-<div id="chat-list"></div>
-
-<!-- Chat privé -->
+<header>Henoc Virtuel Chat</header>
+<div id="title">Henoc Virtuel</div>
 <div id="chat-container"></div>
+<div class="new-msg-notification" id="new-msg">Nouveau message !</div>
 <div id="input-container">
-<input type="text" id="user-input" placeholder="Écris ton message...">
+<input type="text" id="pseudo" placeholder="Ton pseudo" style="flex:1;">
+<input type="text" id="user-input" placeholder="Écris ton message ici..." style="flex:2;">
 <button onclick="sendMessage()">Envoyer</button>
 </div>
 
-<!-- Posts -->
-<div id="posts"></div>
-
-</div>
-
 <script>
-// 🔹 Firebase Configuration 🔹
+// 🔹 CONFIGURATION FIREBASE 🔹
 const firebaseConfig = {
   apiKey: "AIzaSyAae27A5HSJ80eXk_Zw-khnoDlVUgbZ-MA",
   authDomain: "henochat-109b5.firebaseapp.com",
@@ -65,128 +54,75 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const chatRef = db.ref("chat");
 
-// 🔹 Variables 🔹
-let currentUserId = "user123"; // change pour tester plusieurs
-let currentChatId = "";
+// DOM
 const chatContainer = document.getElementById('chat-container');
-const chatList = document.getElementById('chat-list');
 const userInput = document.getElementById('user-input');
-const postsDiv = document.getElementById('posts');
+const pseudoInput = document.getElementById('pseudo');
+const newMsgNotif = document.getElementById('new-msg');
+const colors = ["#dcf8c6","#f1f0f0","#ffe4b5","#d1c4e9","#ffccbc","#b2ebf2"];
 
-// 🔹 Présence en ligne 🔹
-const statusRef = db.ref(`users/${currentUserId}/status`);
-window.addEventListener("focus", ()=> statusRef.set("online"));
-window.addEventListener("blur", ()=> statusRef.set("offline"));
+// Ajouter un message
+function addMessage(text, pseudo, timestamp){
+    const msg = document.createElement('div');
+    msg.className = pseudo === pseudoInput.value.trim() ? 'message user' : 'message other';
 
-// 🔹 Charger liste utilisateurs / chats 🔹
-db.ref("users").once("value", snap=>{
-  const users = snap.val();
-  for(let uid in users){
-    if(uid!==currentUserId){
-      const div = document.createElement('div');
-      div.className="chat-item";
-      div.onclick = ()=> openChat(uid);
-      div.innerHTML = `<img src="${users[uid].avatar||'https://i.pravatar.cc/40'}" class="avatar">
-                       <div>
-                         <div class="chat-name">${users[uid].pseudo}</div>
-                         <div class="status-text" id="status-${uid}"></div>
-                       </div>`;
-      chatList.appendChild(div);
-      // Statut en ligne
-      db.ref(`users/${uid}/status`).on("value", s=>{
-        document.getElementById(`status-${uid}`).textContent = s.val()==="online"?"En ligne":"Hors ligne";
-      });
-    }
-  }
-});
+    const av = document.createElement('div');
+    av.className = 'avatar';
+    av.style.backgroundColor = colors[pseudo.charCodeAt(0) % colors.length];
+    msg.appendChild(av);
 
-// 🔹 Ouvrir chat privé 🔹
-function openChat(otherId){
-  chatContainer.innerHTML="";
-  currentChatId = [currentUserId,otherId].sort().join("_");
-  const chatRef = db.ref(`privateChats/${currentChatId}/messages`);
-  chatRef.off();
-  chatRef.on("child_added", snap=>{
-    const msg = snap.val();
-    addMessageUI(snap.key,msg.senderId,msg.text,msg.readBy);
-  });
+    const content = document.createElement('div');
+    const username = document.createElement('span');
+    username.className = 'username';
+    username.textContent = pseudo;
+    username.style.color = colors[pseudo.charCodeAt(0) % colors.length];
+    content.appendChild(username);
+
+    const msgText = document.createElement('span');
+    msgText.textContent = text;
+    content.appendChild(msgText);
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'timestamp';
+    timeSpan.textContent = timestamp;
+    content.appendChild(timeSpan);
+
+    msg.appendChild(content);
+    chatContainer.appendChild(msg);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// 🔹 Ajouter message à l'UI 🔹
-function addMessageUI(msgId,sender,text,readBy){
-  const div = document.createElement('div');
-  div.className = sender===currentUserId?"message user":"message other";
-  const tickText = sender===currentUserId ? `${readBy && readBy.includes(currentUserId) ? "✅ lu":"✅"}`:"";
-  div.innerHTML=`<span>${text}</span><span class="ticks">${tickText}</span>`;
-  chatContainer.appendChild(div);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-  if(sender!==currentUserId) markMessageAsRead(msgId);
-}
-
-// 🔹 Envoyer message 🔹
+// Envoyer message à Firebase
 function sendMessage(){
-  const text = userInput.value.trim();
-  if(!text || !currentChatId) return;
-  const msgId = "msg"+Date.now();
-  const now = new Date().toISOString();
-  db.ref(`privateChats/${currentChatId}/messages/${msgId}`).set({
-    senderId: currentUserId,
-    text,
-    timestamp: now,
-    readBy:[currentUserId]
-  });
-  userInput.value='';
+    const message = userInput.value.trim();
+    const pseudo = pseudoInput.value.trim() || "Anonyme";
+    if(!message) return;
+    const now = new Date();
+    const timestamp = now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
+    chatRef.push({ pseudo, text: message, timestamp });
+    userInput.value = '';
 }
 
-// 🔹 Confirmation lecture 🔹
-function markMessageAsRead(msgId){
-  const ref = db.ref(`privateChats/${currentChatId}/messages/${msgId}/readBy`);
-  ref.once("value", snap=>{
-    let readers = snap.val()||[];
-    if(!readers.includes(currentUserId)){
-      readers.push(currentUserId);
-      ref.set(readers);
+// Écouter messages en temps réel
+chatRef.on("child_added", snapshot => {
+    const data = snapshot.val();
+    addMessage(data.text, data.pseudo, data.timestamp);
+
+    if(document.hidden){
+        newMsgNotif.style.display = 'block';
     }
-  });
-}
-
-// 🔹 POSTS 🔹
-db.ref("posts").on("child_added", snap=>{
-  const post = snap.val();
-  const div = document.createElement('div');
-  div.className="post";
-  const isPublic = post.public||false;
-  div.innerHTML=`<div><b>${post.owner}</b></div>
-                 <div>${post.text}</div>
-                 <div class="actions">
-                   <button onclick="likePost('${snap.key}')">❤️ ${post.likes?post.likes.length:0}</button>
-                   <button onclick="commentPostPrompt('${snap.key}')">💬 ${post.comments?Object.keys(post.comments).length:0}</button>
-                 </div>`;
-  if(!isPublic && post.owner!==currentUserId) div.style.display="none"; // posts privés invisibles pour les autres
-  postsDiv.appendChild(div);
 });
 
-// 🔹 Likes & commentaires 🔹
-function likePost(postId){
-  const ref = db.ref(`posts/${postId}/likes`);
-  ref.once("value", snap=>{
-    let likes = snap.val()||[];
-    if(!likes.includes(currentUserId)) likes.push(currentUserId);
-    ref.set(likes);
-  });
-}
+// cacher la notification si l’utilisateur clique dessus
+newMsgNotif.addEventListener('click', () => {
+    newMsgNotif.style.display = 'none';
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+});
 
-function commentPostPrompt(postId){
-  const text = prompt("Écris ton commentaire :");
-  if(!text) return;
-  const commentId = "cmt"+Date.now();
-  db.ref(`posts/${postId}/comments/${commentId}`).set({
-    userId: currentUserId,
-    text,
-    timestamp: new Date().toISOString()
-  });
-}
+// Envoyer avec Enter
+userInput.addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
 </script>
 </body>
-  </html>
+</html>
