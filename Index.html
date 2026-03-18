@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Henoc AI Chat</title>
+<style>
+body { font-family: Arial; background: #ece5dd; margin: 0; padding: 0; }
+header { background: #075e54; color: white; padding: 15px; text-align: center; font-size: 1.5em; }
+#chat-container { display: flex; flex-direction: column; height: calc(100vh - 70px); max-width: 600px; margin: 0 auto; padding: 10px; overflow-y: auto; }
+.message { max-width: 70%; margin: 5px 0; padding: 10px; border-radius: 20px; word-wrap: break-word; }
+.user { background-color: #dcf8c6; align-self: flex-end; }
+.bot { background-color: #ffffff; align-self: flex-start; }
+#input-container { display: flex; max-width: 600px; margin: 0 auto; padding: 10px; background: #fff; }
+#input-container input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+#input-container button { margin-left: 10px; padding: 10px 20px; border-radius: 20px; border: none; background: #25d366; color: white; cursor: pointer; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<header>Henoc AI Chat</header>
+
+<div id="chat-container"></div>
+
+<div id="input-container">
+<input type="text" id="user-input" placeholder="Écris ton message ici...">
+<button onclick="sendMessage()">Envoyer</button>
+</div>
+
+<script>
+const chatContainer = document.getElementById('chat-container');
+const userInput = document.getElementById('user-input');
+let chatHistory = [];
+
+// Liste de réponses Henoc AI (humour, science, spiritualité)
+const responses = [
+    "Haha, c’est très drôle ! 😄",
+    "Spirituellement parlant, c’est profond… 🙏",
+    "Selon la science, tu as raison… 💡",
+    "Wow, je ne savais pas ça !",
+    "Intéressant ! Peux-tu expliquer davantage ?",
+    "Je réfléchis à ça… 🤔",
+    "Ah oui, ça mérite d’être exploré plus loin…",
+    "Haha, tu me fais sourire 😁"
+];
+
+// Ajouter un message
+function addMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.className = 'message ' + sender;
+    msg.textContent = text;
+    chatContainer.appendChild(msg);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    chatHistory.push({ role: sender, content: text });
+}
+
+// Générer réponse Henoc AI
+function botReply(userMessage) {
+    let reply = responses[Math.floor(Math.random() * responses.length)];
+
+    // Réponses basées sur mots-clés
+    const msgLower = userMessage.toLowerCase();
+    if(msgLower.includes("bonjour") || msgLower.includes("salut")) reply = "Salut ! Comment ça va ? 🤖";
+    if(msgLower.includes("merci")) reply = "Avec plaisir ! 😊";
+    if(msgLower.includes("comment")) reply = "Je vais bien, merci ! Et toi ?";
+    if(msgLower.includes("Henoc")) reply = "Ah, tu parles de moi ? 😎";
+
+    // Simule un délai de réponse
+    setTimeout(() => addMessage(reply, 'bot'), 500);
+}
+
+// Envoyer message
+function sendMessage() {
+    const message = userInput.value.trim();
+    if(!message) return;
+    addMessage(message, 'user');
+    userInput.value = '';
+    botReply(message);
+}
+
+// Touche Enter
+userInput.addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
+
+// Charger historique depuis localStorage
+window.onload = () => {
+    if(localStorage.getItem('chatHistory')) {
+        chatHistory = JSON.parse(localStorage.getItem('chatHistory'));
+        chatHistory.forEach(msg => addMessage(msg.content, msg.role));
+    }
+};
+
+// Sauvegarder historique avant de quitter
+window.onbeforeunload = () => {
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+};
+</script>
+
+</body>
+</html>
