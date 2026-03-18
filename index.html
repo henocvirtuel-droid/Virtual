@@ -1,279 +1,323 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Henoc Virtuel Chat</title>
 
-<!-- Firebase JS -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body {
-    font-family: Arial;
-    background: #ece5dd;
-    margin: 0;
-    padding: 0;
-}
-header {
-    background: #075e54;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    font-size: 1.5em;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 
-}
-    #contacts{
-max-width:600px;
-margin:10px auto;
-background:white;
-padding:10px;
-border-radius:10px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-}
-#contacts h3{
-margin-top:0;
-color:#075e54;
-}
-
-#contact-list{
-list-style:none;
-padding:0;
+body{
+font-family:Arial;
+background:#ece5dd;
 margin:0;
 }
-    #contact-list li{
+
+header{
+background:#075e54;
+color:white;
+padding:15px;
+text-align:center;
+font-size:1.5em;
+}
+
+#title{
+text-align:center;
+font-size:1.8em;
+margin:10px;
+color:#075e54;
+font-weight:bold;
+}
+
+#sections{
+max-width:600px;
+margin:auto;
+}
+
+.section{
+background:white;
+margin:10px;
+padding:10px;
+border-radius:10px;
+}
+
+.scroll-box{
+max-height:120px;
+overflow-y:auto;
+}
+
+.scroll-box div{
 padding:8px;
 border-bottom:1px solid #eee;
 cursor:pointer;
 }
- #contact-list li:hover{
-background:#f1f1f1;
+
+.scroll-box div:hover{
+background:#f0f0f0;
 }
-#title {
-    text-align: center;
-    font-size: 1.8em;
-    margin: 10px 0;
-    color: #075e54;
-    font-weight: bold;
+
+#chat-container{
+display:flex;
+flex-direction:column;
+max-width:600px;
+margin:auto;
+padding:10px;
+height:300px;
+overflow-y:auto;
+background:#f0f0f0;
+border-radius:10px;
 }
-#chat-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 160px);
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 10px;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    background: #f0f0f0;
-    border-radius: 10px;
+
+.message{
+margin:5px 0;
+padding:8px;
+border-radius:15px;
+max-width:70%;
 }
-.message {
-    max-width: 70%;
-    margin: 5px 0;
-    padding: 10px 10px 5px 10px;
-    border-radius: 20px;
-    word-wrap: break-word;
-    position: relative;
-    line-height: 1.4;
-    display: flex;
-    align-items: flex-end;
+
+.user{
+align-self:flex-end;
+background:#dcf8c6;
 }
-.user {
-    align-self: flex-end;
-    background-color: #dcf8c6;
-    border-bottom-right-radius: 0;
+
+.other{
+align-self:flex-start;
+background:white;
 }
-.other {
-    align-self: flex-start;
-    background-color: #ffffff;
-    border-bottom-left-radius: 0;
+
+#input-container{
+display:flex;
+max-width:600px;
+margin:auto;
+padding:10px;
+background:white;
 }
-.avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 5px;
-    flex-shrink: 0;
+
+#input-container input{
+flex:1;
+padding:10px;
+border-radius:20px;
+border:1px solid #ccc;
+margin-right:5px;
 }
-.username {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 2px;
+
+#input-container button{
+padding:10px 20px;
+border:none;
+background:#25d366;
+color:white;
+border-radius:20px;
 }
-.timestamp {
-    font-size: 0.7em;
-    color: gray;
-    margin-left: 5px;
-}
-#input-container {
-    display: flex;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 10px;
-    background: #fff;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-}
-#input-container input {
-    padding: 10px;
-    border-radius: 20px;
-    border: 1px solid #ccc;
-    outline: none;
-    margin-right: 5px;
-}
-#input-container button {
-    padding: 10px 20px;
-    border-radius: 20px;
-    border: none;
-    background: #25d366;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
-}
-#input-container button:hover {
-    background: #128c7e;
-}
-.new-msg-notification {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    background: #fffa65;
-    padding: 10px 15px;
-    border-radius: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    display: none;
-    cursor: pointer;
-    font-weight: bold;
-}
-@media (max-width: 640px) {
-    #input-container {
-        flex-direction: column;
-    }
-    #input-container input {
-        margin: 5px 0;
-        width: 100%;
-    }
-    #input-container button {
-        width: 100%;
-    }
-}
+
 </style>
+
 </head>
 
 <body>
+
 <header>Henoc Virtuel Chat</header>
+
 <div id="title">Henoc Virtuel</div>
-    <div id="contacts">
-<h3>Contacts</h3>
-<ul id="contact-list">
-<li>Daniel</li>
-<li>Sarah</li>
-<li>Moise</li>
-</ul>
-    </div>
+
+<div id="sections">
+
+<div class="section">
+<h3>Conversations</h3>
+<div class="scroll-box" id="conversations"></div>
+</div>
+
+<div class="section">
+<h3>Statuts</h3>
+<div class="scroll-box" id="status"></div>
+</div>
+
+<div class="section">
+<h3>Répertoire</h3>
+<div class="scroll-box" id="directory"></div>
+</div>
+
+<div class="section">
+<h3>Abonnés</h3>
+<div class="scroll-box" id="subscribers"></div>
+</div>
+
+</div>
 
 <div id="chat-container"></div>
 
-<div class="new-msg-notification" id="new-msg">Nouveau message !</div>
-
 <div id="input-container">
-    <input type="text" id="pseudo" placeholder="Ton pseudo" style="flex:1;">
-    <input type="text" id="user-input" placeholder="Écris ton message ici..." style="flex:2;">
-    <button onclick="sendMessage()">Envoyer</button>
+<input id="pseudo" placeholder="Ton nom">
+<input id="user-input" placeholder="Message">
+<button onclick="sendMessage()">Envoyer</button>
 </div>
 
 <script>
-// 🔹 CONFIGURATION FIREBASE 🔹
-const firebaseConfig = {
-    apiKey: "AIzaSyAae27A5HSJ80eXk_Zw-khnoDlVUgbZ-MA",
-    authDomain: "henochat-109b5.firebaseapp.com",
-    databaseURL: "https://henochat-109b5-default-rtdb.firebaseio.com",
-    projectId: "henochat-109b5",
-    storageBucket: "henochat-109b5.appspot.com",
-    messagingSenderId: "681244730245",
-    appId: "1:681244730245:web:feb5fe5b02e8f1958f5aec"
+
+const firebaseConfig={
+apiKey:"AIzaSyAae27A5HSJ80eXk_Zw-khnoDlVUgbZ-MA",
+authDomain:"henochat-109b5.firebaseapp.com",
+databaseURL:"https://henochat-109b5-default-rtdb.firebaseio.com",
+projectId:"henochat-109b5"
 };
+
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const chatRef = db.ref("chat");
 
-// DOM Elements
-const chatContainer = document.getElementById('chat-container');
-const userInput = document.getElementById('user-input');
-const pseudoInput = document.getElementById('pseudo');
-const newMsgNotif = document.getElementById('new-msg');
+const db=firebase.database();
 
-// Couleurs pour avatars
-const colors = ["#dcf8c6","#f1f0f0","#ffe4b5","#d1c4e9","#ffccbc","#b2ebf2"];
+let currentUser=null;
+let currentChat="public";
 
-// 🔹 Ajouter un message dans le chat
-function addMessage(text, pseudo, timestamp){
-    const msg = document.createElement('div');
-    msg.className = pseudo === pseudoInput.value.trim() ? 'message user' : 'message other';
+const chatContainer=document.getElementById("chat-container");
+const pseudoInput=document.getElementById("pseudo");
+const userInput=document.getElementById("user-input");
 
-    // Avatar
-    const av = document.createElement('div');
-    av.className = 'avatar';
-    av.style.backgroundColor = colors[pseudo.charCodeAt(0) % colors.length];
-    msg.appendChild(av);
+const subscribersBox=document.getElementById("subscribers");
+const directoryBox=document.getElementById("directory");
+const conversationsBox=document.getElementById("conversations");
 
-    // Contenu du message
-    const content = document.createElement('div');
 
-    const username = document.createElement('span');
-    username.className = 'username';
-    username.textContent = pseudo;
-    username.style.color = colors[pseudo.charCodeAt(0) % colors.length];
-    content.appendChild(username);
+pseudoInput.addEventListener("change",()=>{
 
-    const msgText = document.createElement('span');
-    msgText.textContent = text;
-    content.appendChild(msgText);
+const name=pseudoInput.value.trim();
 
-    const timeSpan = document.createElement('span');
-    timeSpan.className = 'timestamp';
-    timeSpan.textContent = timestamp;
-    content.appendChild(timeSpan);
-
-    msg.appendChild(content);
-    chatContainer.appendChild(msg);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+if(!name){
+alert("Entre ton nom");
+return;
 }
 
-// 🔹 Envoyer un message
+currentUser=name;
+
+db.ref("users/"+name).set({
+name:name,
+joined:Date.now()
+});
+
+});
+
+
+function openPrivateChat(user){
+
+if(!currentUser)return;
+
+currentChat=[currentUser,user].sort().join("_");
+
+chatContainer.innerHTML="";
+
+loadMessages();
+
+addConversation(user);
+
+}
+
+
+function addConversation(user){
+
+const div=document.createElement("div");
+div.textContent=user;
+
+div.onclick=()=>{
+openPrivateChat(user);
+};
+
+conversationsBox.appendChild(div);
+
+}
+
+
 function sendMessage(){
-    const message = userInput.value.trim();
-    const pseudo = pseudoInput.value.trim() || "Anonyme";
-    if(!message) return;
-    const now = new Date();
-    const timestamp = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-    chatRef.push({ pseudo, text: message, timestamp });
-    userInput.value = '';
+
+if(!currentUser){
+alert("Entre ton nom");
+return;
 }
 
-// 🔹 Écouter les messages en temps réel
-chatRef.on("child_added", snapshot => {
-    const data = snapshot.val();
-    addMessage(data.text, data.pseudo, data.timestamp);
+const message=userInput.value.trim();
 
-    if(document.hidden){
-        newMsgNotif.style.display = 'block';
-    }
+if(!message)return;
+
+const now=new Date();
+
+const timestamp=
+now.getHours().toString().padStart(2,"0")+":"+
+now.getMinutes().toString().padStart(2,"0");
+
+db.ref("messages/"+currentChat).push({
+
+pseudo:currentUser,
+text:message,
+timestamp:timestamp
+
 });
 
-// 🔹 Notifications
-newMsgNotif.addEventListener('click', () => {
-    newMsgNotif.style.display = 'none';
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+userInput.value="";
+
+}
+
+
+function addMessage(text,pseudo,timestamp){
+
+const msg=document.createElement("div");
+
+msg.className=pseudo===currentUser?"message user":"message other";
+
+msg.innerHTML="<b>"+pseudo+"</b><br>"+text+" <span style='font-size:10px;color:gray'>"+timestamp+"</span>";
+
+chatContainer.appendChild(msg);
+
+chatContainer.scrollTop=chatContainer.scrollHeight;
+
+}
+
+
+function loadMessages(){
+
+db.ref("messages/"+currentChat).off();
+
+db.ref("messages/"+currentChat).on("child_added",snap=>{
+
+const data=snap.val();
+
+addMessage(data.text,data.pseudo,data.timestamp);
+
 });
 
-// 🔹 Envoyer avec Enter
-userInput.addEventListener('keydown', e => { 
-    if(e.key === 'Enter') sendMessage(); 
+}
+
+
+db.ref("users").on("child_added",snap=>{
+
+const user=snap.val();
+
+const div=document.createElement("div");
+
+div.textContent=user.name;
+
+div.onclick=()=>{
+
+openPrivateChat(user.name);
+
+};
+
+subscribersBox.appendChild(div);
+
+directoryBox.appendChild(div.cloneNode(true));
+
 });
+
+
+userInput.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+sendMessage();
+}
+});
+
 </script>
+
 </body>
-  </html>
+    </html>
