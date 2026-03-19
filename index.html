@@ -79,6 +79,7 @@ background:#0f6d5f;
 color:white;
 border:none;
 padding:12px;
+cursor:pointer;
 }
 
 </style>
@@ -178,9 +179,7 @@ let text=input.value
 if(text.trim()=="") return
 
 db.ref("messages").push({
-
 message:text
-
 })
 
 input.value=""
@@ -191,13 +190,17 @@ input.value=""
 
 db.ref("messages").on("child_added",function(data){
 
+let value=data.val()
+
+if(!value) return
+
 let chat=document.getElementById("chatArea")
 
 let msg=document.createElement("div")
 
 msg.className="chat"
 
-msg.innerText=data.val().message
+msg.innerText=value.message
 
 chat.appendChild(msg)
 
