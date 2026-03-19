@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Henoc Virtuel Chat</title>
+<title>VIRCHAT</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -15,104 +15,70 @@
 
 body{
 font-family:Arial;
-background:#ece5dd;
 margin:0;
+background:#f2f2f2;
 }
 
 header{
-background:#075e54;
+background:#0f6d5f;
 color:white;
+text-align:center;
 padding:15px;
-text-align:center;
-font-size:1.5em;
-}
-
-#title{
-text-align:center;
-font-size:1.8em;
-margin:10px;
-color:#075e54;
+font-size:22px;
 font-weight:bold;
 }
 
-#sections{
-max-width:600px;
-margin:auto;
-}
-
-.section{
+.menu{
+display:flex;
 background:white;
-margin:10px;
-padding:10px;
-border-radius:10px;
+border-bottom:1px solid #ccc;
 }
 
-.scroll-box{
-max-height:120px;
-overflow-y:auto;
-}
-
-.scroll-box div{
-padding:8px;
-border-bottom:1px solid #eee;
+.menu button{
+flex:1;
+padding:15px;
+border:none;
+background:white;
+font-weight:bold;
 cursor:pointer;
 }
 
-.scroll-box div:hover{
-background:#f0f0f0;
+.section{
+display:none;
+padding:15px;
 }
 
-#chat-container{
-display:flex;
-flex-direction:column;
-max-width:600px;
-margin:auto;
+.active{
+display:block;
+}
+
+.chat{
+background:white;
 padding:10px;
-height:300px;
-overflow-y:auto;
-background:#f0f0f0;
+margin:5px;
 border-radius:10px;
 }
 
-.message{
-margin:5px 0;
-padding:8px;
-border-radius:15px;
-max-width:70%;
-}
-
-.user{
-align-self:flex-end;
-background:#dcf8c6;
-}
-
-.other{
-align-self:flex-start;
-background:white;
-}
-
-#input-container{
+.messageBox{
+position:fixed;
+bottom:0;
+width:100%;
 display:flex;
-max-width:600px;
-margin:auto;
-padding:10px;
 background:white;
+border-top:1px solid #ccc;
 }
 
-#input-container input{
+.messageBox input{
 flex:1;
-padding:10px;
-border-radius:20px;
-border:1px solid #ccc;
-margin-right:5px;
+padding:12px;
+border:none;
 }
 
-#input-container button{
-padding:10px 20px;
-border:none;
-background:#25d366;
+.messageBox button{
+background:#0f6d5f;
 color:white;
-border-radius:20px;
+border:none;
+padding:12px;
 }
 
 </style>
@@ -121,203 +87,124 @@ border-radius:20px;
 
 <body>
 
-<header>Henoc Virtuel Chat</header>
+<header>
+VIRCHAT
+</header>
 
-<div id="title">Henoc Virtuel</div>
+<div class="menu">
 
-<div id="sections">
+<button onclick="openSection('conversations')">Conversations</button>
 
-<div class="section">
-<h3>Conversations</h3>
-<div class="scroll-box" id="conversations"></div>
-</div>
+<button onclick="openSection('status')">Status</button>
 
-<div class="section">
-<h3>Statuts</h3>
-<div class="scroll-box" id="status"></div>
-</div>
+<button onclick="openSection('repertoire')">Répertoire</button>
 
-<div class="section">
-<h3>Répertoire</h3>
-<div class="scroll-box" id="directory"></div>
-</div>
-
-<div class="section">
-<h3>Abonnés</h3>
-<div class="scroll-box" id="subscribers"></div>
-</div>
+<button onclick="openSection('abonnes')">Abonnés</button>
 
 </div>
 
-<div id="chat-container"></div>
+<div id="conversations" class="section active">
 
-<div id="input-container">
-<input id="pseudo" placeholder="Ton nom">
-<input id="user-input" placeholder="Message">
+<div id="chatArea"></div>
+
+<div class="messageBox">
+
+<input id="messageInput" placeholder="Message...">
+
 <button onclick="sendMessage()">Envoyer</button>
+
+</div>
+
+</div>
+
+<div id="status" class="section">
+<h3>Status</h3>
+</div>
+
+<div id="repertoire" class="section">
+<h3>Répertoire</h3>
+<p>Henoc</p>
+</div>
+
+<div id="abonnes" class="section">
+<h3>Abonnés</h3>
+<p>Henoc</p>
 </div>
 
 <script>
 
-const firebaseConfig={
-apiKey:"AIzaSyAae27A5HSJ80eXk_Zw-khnoDlVUgbZ-MA",
-authDomain:"henochat-109b5.firebaseapp.com",
-databaseURL:"https://henochat-109b5-default-rtdb.firebaseio.com",
-projectId:"henochat-109b5"
+function openSection(section){
+
+document.querySelectorAll(".section").forEach(s=>{
+s.classList.remove("active")
+})
+
+document.getElementById(section).classList.add("active")
+
+}
+
+/* CONFIG FIREBASE */
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyAae27A5HSJ80eXk_Zw-khnoDlVUgbZ-MA",
+
+authDomain: "henochat-109b5.firebaseapp.com",
+
+databaseURL: "https://henochat-109b5-default-rtdb.firebaseio.com",
+
+projectId: "henochat-109b5",
+
+storageBucket: "henochat-109b5.firebasestorage.app",
+
+messagingSenderId: "681244730245",
+
+appId: "1:681244730245:web:3042c59fe44fac048f5aec"
+
 };
 
 firebase.initializeApp(firebaseConfig);
 
-const db=firebase.database();
+const db = firebase.database();
 
-let currentUser=null;
-let currentChat="public";
-
-const chatContainer=document.getElementById("chat-container");
-const pseudoInput=document.getElementById("pseudo");
-const userInput=document.getElementById("user-input");
-
-const subscribersBox=document.getElementById("subscribers");
-const directoryBox=document.getElementById("directory");
-const conversationsBox=document.getElementById("conversations");
-
-
-pseudoInput.addEventListener("change",()=>{
-
-const name=pseudoInput.value.trim();
-
-if(!name){
-alert("Entre ton nom");
-return;
-}
-
-currentUser=name;
-
-db.ref("users/"+name).set({
-name:name,
-joined:Date.now()
-});
-
-});
-
-
-function openPrivateChat(user){
-
-if(!currentUser)return;
-
-currentChat=[currentUser,user].sort().join("_");
-
-chatContainer.innerHTML="";
-
-loadMessages();
-
-addConversation(user);
-
-}
-
-
-function addConversation(user){
-
-const div=document.createElement("div");
-div.textContent=user;
-
-div.onclick=()=>{
-openPrivateChat(user);
-};
-
-conversationsBox.appendChild(div);
-
-}
-
+/* envoyer message */
 
 function sendMessage(){
 
-if(!currentUser){
-alert("Entre ton nom");
-return;
-}
+let input=document.getElementById("messageInput")
 
-const message=userInput.value.trim();
+let text=input.value
 
-if(!message)return;
+if(text.trim()=="") return
 
-const now=new Date();
+db.ref("messages").push({
 
-const timestamp=
-now.getHours().toString().padStart(2,"0")+":"+
-now.getMinutes().toString().padStart(2,"0");
+message:text
 
-db.ref("messages/"+currentChat).push({
+})
 
-pseudo:currentUser,
-text:message,
-timestamp:timestamp
-
-});
-
-userInput.value="";
+input.value=""
 
 }
 
+/* recevoir messages */
 
-function addMessage(text,pseudo,timestamp){
+db.ref("messages").on("child_added",function(data){
 
-const msg=document.createElement("div");
+let chat=document.getElementById("chatArea")
 
-msg.className=pseudo===currentUser?"message user":"message other";
+let msg=document.createElement("div")
 
-msg.innerHTML="<b>"+pseudo+"</b><br>"+text+" <span style='font-size:10px;color:gray'>"+timestamp+"</span>";
+msg.className="chat"
 
-chatContainer.appendChild(msg);
+msg.innerText=data.val().message
 
-chatContainer.scrollTop=chatContainer.scrollHeight;
+chat.appendChild(msg)
 
-}
-
-
-function loadMessages(){
-
-db.ref("messages/"+currentChat).off();
-
-db.ref("messages/"+currentChat).on("child_added",snap=>{
-
-const data=snap.val();
-
-addMessage(data.text,data.pseudo,data.timestamp);
-
-});
-
-}
-
-
-db.ref("users").on("child_added",snap=>{
-
-const user=snap.val();
-
-const div=document.createElement("div");
-
-div.textContent=user.name;
-
-div.onclick=()=>{
-
-openPrivateChat(user.name);
-
-};
-
-subscribersBox.appendChild(div);
-
-directoryBox.appendChild(div.cloneNode(true));
-
-});
-
-
-userInput.addEventListener("keydown",e=>{
-if(e.key==="Enter"){
-sendMessage();
-}
-});
+})
 
 </script>
 
 </body>
-    </html>
+
+</html>
